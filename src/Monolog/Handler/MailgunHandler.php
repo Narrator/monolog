@@ -1,4 +1,4 @@
-<?php declare(strict_types=1);
+<?php
 
 /*
  * This file is part of the Monolog package.
@@ -59,7 +59,7 @@ class MailgunHandler extends MailHandler
      * @param int          $level   The minimum logging level at which this handler will be triggered
      * @param bool         $bubble  Whether the messages that are handled can bubble up the stack or not
      */
-    public function __construct(string $apiKey, string $domain, string $from, $to, string $subject, int $level = Logger::ERROR, bool $bubble = true)
+    public function __construct($apiKey, $domain, $from, $to, $subject, $level = Logger::ERROR, $bubble = true)
     {
         parent::__construct($level, $bubble);
         $this->apiKey = $apiKey;
@@ -72,26 +72,21 @@ class MailgunHandler extends MailHandler
     /**
      * {@inheritdoc}
      */
-    protected function send(string $content, array $records)
+    protected function send($content, array $records)
     {
         $message = [];
         $message['from'] = $this->from;
         $message['to'] = rtrim(implode(',', $this->to), ',');
         $message['subject'] = $this->subject;
-
-        if ($this->isHtmlBody($content)) {
-            $message['html'] = $content;
-        } else {
-            $message['text'] = $content;
-        }
+        $message['text'] = $content;
 
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, 'https://api.mailgun.net/v3/$this->domain/messages');
+        curl_setopt($ch, CURLOPT_URL, 'https://api.mailgun.net/v3/' . $this->domain . '/messages');
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
-        curl_setopt($ch, CURLOPT_USERPWD, 'api:$this->apiKey');
+        curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+        curl_setopt($ch, CURLOPT_USERPWD, 'api:' . $this->apiKey);
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($message));
-        Curl\Util::execute($ch, 2);
+        Curl\Util::execute($ch);
     }
 }
